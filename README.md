@@ -120,7 +120,7 @@ python main.py --url http://target-website.com --verbose
 ](https://app-cdn.readytensor.ai/publications/resources/hubId=4496/publicationId=1677/image.png?Expires=1751230124&Key-Pair-Id=K2V2TN6YBJQHTG&Signature=sLX71SVHsEOIXkyFnxAtKvRfKsAiEcokFHg~5NHhhMa5ozAm-Gmk-RGQavAeJe8pOm0o4vQ3vqXZiSgkNrGudQx7dUEbe-t0c4MG1bRIxTof7B0oC1FUFAhqTjsbiX-5DrxD1cMILUduybnMbnR-kOeequcHQ7rLJlJVBCYLSXPfubG0883tWQV5Sd1ffLuBn-8hpbn7GQwUxbcLK06tav6Afdaz7m6c7h80J6wZPs8F8~8RtnmXZsWPc0lpCwm1QvfDdbRvrj3huy74QCHDQ-8hyW~O6G5KE~vnZEHfFAkxPWZOBHFFjqLQw41C-~XNaX9Hhh5jArsSLrd0ujUyvQ__)
 ### Phase 1: Discovery
 
-The Web Analyzer performs comprehensive analysis of the target application:
+The Web Analyzer performs a comprehensive analysis of the target application:
 - Extracts page structure, forms, and input fields
 - Identifies authentication mechanisms
 - Collects cookies and security headers
@@ -179,7 +179,7 @@ All results are saved in the `moktashif_reports` directory:
    ```
 
 2. **API Key Errors**
-   - Verify `.env` file exists with valid API key
+   - Verify `.env` file exists with a valid API key
    - Check OpenRouter account credits
 
 3. **Permission Errors**
@@ -219,8 +219,6 @@ This project is licensed under the MIT License. See the LICENSE file for full te
 
 **Mohamed Taha Khattab**  
 Email: mohamed.taha.khattab0@gmail.com
-
-Mohamed Taha Khattab is a cybersecurity researcher specializing in AI-enhanced security tools and automated penetration testing frameworks.
 
 ## Disclaimer
 
